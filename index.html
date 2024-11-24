@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>User Analytics POC</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        body { 
+            font-family: system-ui, sans-serif;
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px;
+        }
+        .chart-container {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            height: 400px;
+        }
+        select {
+            padding: 8px;
+            font-size: 16px;
+            min-width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>User Analytics POC</h1>
+    
+    <select id="userSelect">
+        <option value="">Loading users...</option>
+    </select>
+
+    <div class="chart-container">
+        <canvas id="metricsChart"></canvas>
+    </div>
+
+    <script>
+        let metricsChart;
+
+        function initChart() {
+            const ctx = document.getElementById('metricsChart').getContext('2d');
+            metricsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Daily Count',
+                        data: [],
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Daily Counts'
+                        },
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function fetchUsers() {
+            fetch('/users')
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(users) {
+                    const select = document.getElementById('userSelect');
+                    select.innerHTML = users.map(function(user) {
+                        return '<option value="' + user + '">User ' + user + '</option>';
+                    }).join('');
+                    
+                    if (users.length > 0) {
+                        fetchMetrics(users[0]);
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                });
+        }
+
+        function fetchMetrics(userId) {
+            fetch('/metrics/' + userId)
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(metrics) {
+                    const dates = metrics.map(function(m) {
+                        return new Date(m.date).toLocaleDateString();
+                    });
+                    const values = metrics.map(function(m) {
+                        return m.value;
+                    });
+
+                    metricsChart.data.labels = dates;
+                    metricsChart.data.datasets[0].data = values;
+                    metricsChart.update();
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initChart();
+            fetchUsers();
+
+            document.getElementById('userSelect').addEventListener('change', function(e) {
+                if (e.target.value) {
+                    fetchMetrics(e.target.value);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
