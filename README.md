@@ -36,7 +36,7 @@ flowchart LR
 
 ## Prerequisites
 
-- Python 3.7+
+- Python 3.10+
 - pip
 
 ## Installation
@@ -44,7 +44,7 @@ flowchart LR
 1. Clone the repository:
 
     ```sh
-    git clone <repository-url>
+    git clone git@github.com:patricktrainer/duckdb-user-analytics.git
     cd duckdb-user-analytics
     ```
 
